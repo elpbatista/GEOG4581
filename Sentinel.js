@@ -392,12 +392,31 @@ function runVersion2(study_area, label, years, start, end) {
 
 function runValidation(study_area, label, years, start, end) {
   var ndvi = {};
-  years.forEach(function(year) {
+  years.forEach(function (year) {
     var startDate = year + "-" + start;
     var endDate = year + "-" + end;
     // NDVI composite
     var s2Composite = getS2Composite(study_area, startDate, endDate);
     ndvi[year] = addNDVI(s2Composite);
+
+    // --- Unsupervised classification ---
+
+    // Develop a sample of points for use in unsupervised classification
+    var training = s2Composite.sample({
+      region: study_area, // 50 km buffer around point
+      scale: 30,
+      numPixels: 500,
+      seed: 42,
+    });
+
+    // Use KMeans to build a model that clusters the sample of points
+    var clusterer = ee.Clusterer.wekaKMeans(4).train(training);
+
+    // Apply the kmeans clusterer to all of the pixels in the image
+    var result = s2Composite.cluster(clusterer);
+
+    // 5. Add it to the map!
+    Map.addLayer(result.randomVisualizer(), {}, "KMeans Clusters " + year);
   });
 
   // Change detection for NDVI
@@ -430,6 +449,7 @@ function runValidation(study_area, label, years, start, end) {
 
     // Stratified random sample from the masked NDVI change
     var sampleSize = 50; // Adjust sample size as needed
+
     var sample = ndviChangeMasked.stratifiedSample({
       numPoints: sampleSize,
       classBand: "NDVI_Change",
@@ -446,16 +466,21 @@ function runValidation(study_area, label, years, start, end) {
     var combined1 = rand_st_points
       .toList(numpoints)
       .zip(ee.List.sequence(0, numpoints))
-      .map(function(list) {
+      .map(function (list) {
         list = ee.List(list);
-        return ee.Feature(list.get(0))
+        return ee
+          .Feature(list.get(0))
           .set("ID", ee.String(ee.Number(list.get(1)).toInt()));
       });
 
     var rand_st_points_comb = ee.FeatureCollection(combined1);
 
     // Add the stratified random sample points to the map
-    Map.addLayer(rand_st_points_comb, { color: "orange" }, label + " Sample Points");
+    Map.addLayer(
+      rand_st_points_comb,
+      { color: "orange" },
+      label + " Sample Points"
+    );
 
     // Export the masked NDVI change image
     Export.image.toDrive({
