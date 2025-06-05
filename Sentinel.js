@@ -19,12 +19,6 @@
      (b) Protected forests enrolled in a carbon offset scheme
    in the drylands of East Africa.
 
- Methodology:
-   - Acquire Sentinel-1 SAR and Sentinel-2 NDRE1 imagery for six study locations.
-   - Use a random forest classifier to map land cover.
-   - Perform a ten-year change detection to quantify AGB change in each location.
-   - Compare trends between protected areas and those with carbon offset schemes.
-
  Study Areas (from data.js):
    - Chyulu Hills National Park, Kenya
    - Amboseli National Park, Kenya
@@ -57,9 +51,10 @@ print("=== Kuhisi Kwa Mbali ===");
 // Uncomment the desired dataset to use
 
 // var data = require("users/elpbatista/GEOG4581:data.js");
-var data = require("users/elpbatista/GEOG4581:data-Chyulu_Amboseli.js");
+// var data = require("users/elpbatista/GEOG4581:data-Chyulu_Amboseli.js");
 // var data = require("users/elpbatista/GEOG4581:data-Bale_Leroghi_Marsabit.js");
 // var data = require("users/elpbatista/GEOG4581:data-LowerZambezi_Munyeta.js");
+var data = require("users/elpbatista/GEOG4581:test_data.js");
 
 var locations = data.locations;
 
@@ -102,8 +97,8 @@ var start = "04-15";
 var end = "06-15";
 
 // Initialize dictionaries to store NDRE1 and SAR composites for each year
-var ndre1 = {};
-var vv = {};
+// var ndre1 = {};
+// var vv = {};
 
 // Add a layer for each feature in the FeatureCollection with a unique color outline
 
@@ -132,10 +127,14 @@ locations.forEach(function (feature, idx) {
   panel.add(button);
 
   // Run Version 1 analysis
-  runVersion1(study_area, label, v1_years, start, end);
+  // runVersion1(study_area, label, v1_years, start, end);
 
   // Run Version 2 analysis
-  runVersion2(study_area, label, v2_years, start, end);
+  // runVersion2(study_area, label, v2_years, start, end);
+
+  // Run Validation analysis (if needed)
+  runValidation(study_area, label, v2_years, start, end);
+
 });
 
 // Function for exemplary purposes
@@ -181,7 +180,7 @@ function getS2Composite(study_area, startDate, endDate) {
     .map(maskS2cloudSCL);
 
   var composite = collection
-    .select(["B5", "B8"])
+    .select(["B4", "B5", "B8"])
     // .copyProperties(image, ["system:time_start"])
     .median()
     .clip(study_area);
@@ -224,16 +223,19 @@ function addNDRE1(image) {
 
 // Calculate NDVI from Sentinel-2 composite
 function addNDVI(image) {
-  var ndvi = image.normalizedDifference(["B8", "B4"]).rename("NDVI");
+  var ndvi = image.normalizedDifference(["B8", "B4"])
+    .multiply(1000)
+    .toInt()
+    .rename("NDVI");
   return image.addBands(ndvi);
 }
 
 // ======================= Version 1: NDRE1 and SAR Analysis =======================
-function runVersion1(study_area, label, v1_years, start, end) {
+function runVersion1(study_area, label, years, start, end) {
   var ndre1 = {};
   var vv = {};
 
-  v1_years.forEach(function (year) {
+  years.forEach(function (year) {
     var startDate = year + "-" + start;
     var endDate = year + "-" + end;
 
@@ -289,10 +291,10 @@ function runVersion1(study_area, label, v1_years, start, end) {
 }
 
 // ======================= Version 2: Sentinel-2 =======================
-function runVersion2(study_area, label, v2_years, start, end) {
+function runVersion2(study_area, label, years, start, end) {
   var ndre1 = {};
 
-  v2_years.forEach(function (year) {
+  years.forEach(function (year) {
     var startDate = year + "-" + start;
     var endDate = year + "-" + end;
 
@@ -344,39 +346,133 @@ function runVersion2(study_area, label, v2_years, start, end) {
     });
     print(histogramVis);
   }
+
+  // Create a legend panel
+  var legend = ui.Panel({
+    style: {
+      position: "bottom-left",
+      padding: "8px 15px",
+    },
+  });
+
+  // Add a title to the legend
+  legend.add(
+    ui.Label({
+      value: "NDRE1 Change",
+      style: { fontWeight: "bold", fontSize: "14px", margin: "0 0 4px 0" },
+    })
+  );
+
+  // Add color swatches and labels for NDRE1 Change
+  var makeRow = function (color, name) {
+    var colorBox = ui.Label("", {
+      backgroundColor: color,
+      padding: "8px",
+      margin: "0 0 4px 0",
+    });
+    var description = ui.Label(name, { margin: "0 0 4px 6px" });
+    return ui.Panel(
+      [colorBox, description],
+      ui.Panel.Layout.Flow("horizontal")
+    );
+  };
+
+  // Add rows for your palette (adjust as needed)
+  legend.add(makeRow("red", "Decrease"));
+  legend.add(makeRow("white", "No Change"));
+  legend.add(makeRow("green", "Increase"));
+
+  // Add the legend to the map
+  Map.add(legend);
 }
 
-// Create a legend panel
-var legend = ui.Panel({
-  style: {
-    position: 'bottom-left',
-    padding: '8px 15px'
-  }
-});
+// ======================= Version 3: Sentinel-2 Validation =======================
 
-// Add a title to the legend
-legend.add(
-  ui.Label({
-    value: "NDRE1 Change",
-    style: { fontWeight: "bold", fontSize: "14px", margin: "0 0 4px 0" },
-  })
-);
+// This section is for future validation work using Sentinel-2 data
 
-// Example: Add color swatches and labels for NDRE1 Change
-var makeRow = function(color, name) {
-  var colorBox = ui.Label('', {
-    backgroundColor: color,
-    padding: '8px',
-    margin: '0 0 4px 0'
+function runValidation(study_area, label, years, start, end) {
+  var ndvi = {};
+  years.forEach(function(year) {
+    var startDate = year + "-" + start;
+    var endDate = year + "-" + end;
+    // NDVI composite
+    var s2Composite = getS2Composite(study_area, startDate, endDate);
+    ndvi[year] = addNDVI(s2Composite);
   });
-  var description = ui.Label(name, {margin: '0 0 4px 6px'});
-  return ui.Panel([colorBox, description], ui.Panel.Layout.Flow('horizontal'));
-};
 
-// Add rows for your palette (adjust as needed)
-legend.add(makeRow('red', 'Decrease'));
-legend.add(makeRow('white', 'No Change'));
-legend.add(makeRow('green', 'Increase'));
+  // Change detection for NDVI
+  if (ndvi[v2_years[0]] && ndvi[v2_years[1]]) {
+    var ndviChange = ndvi[v2_years[1]]
+      .select("NDVI")
+      .subtract(ndvi[v2_years[0]].select("NDVI"))
+      .rename("NDVI_Change");
+    // Uncomment to visualize NDVI change
+    Map.addLayer(
+      ndviChange,
+      { min: -500, max: 500, palette: ["red", "white", "green"] },
+      label + " NDVI Change " + v2_years[0] + "-" + v2_years[1]
+    );
 
-// Add the legend to the map
-Map.add(legend);
+    // Threshold for NDVI change mask (adjust as needed)
+    var NDVI_threshold = -200;
+    var ndviChangeMask = ndviChange.lt(NDVI_threshold);
+    var ndviChangeMasked = ndviChangeMask.updateMask(ndviChangeMask);
+
+    // Visualization parameters for the mask
+    var threshViz = { min: 0, max: 1, palette: ["000000", "990000"] };
+
+    // Add masked NDVI change to the map, clipped to the study area
+    Map.addLayer(
+      ndviChangeMasked.clip(study_area),
+      threshViz,
+      label + " NDVI Change Mask " + v2_years[0] + "-" + v2_years[1]
+    );
+
+    // Stratified random sample from the masked NDVI change
+    var sampleSize = 50; // Adjust sample size as needed
+    var sample = ndviChangeMasked.stratifiedSample({
+      numPoints: sampleSize,
+      classBand: "NDVI_Change",
+      region: study_area,
+      scale: 30,
+      geometries: true,
+    });
+
+    var seed = 42;
+    var rand_st_points = sample.randomColumn("random", seed).sort("random");
+    var numpoints = rand_st_points.size();
+    print("Number of sample points: ", numpoints);
+
+    var combined1 = rand_st_points
+      .toList(numpoints)
+      .zip(ee.List.sequence(0, numpoints))
+      .map(function(list) {
+        list = ee.List(list);
+        return ee.Feature(list.get(0))
+          .set("ID", ee.String(ee.Number(list.get(1)).toInt()));
+      });
+
+    var rand_st_points_comb = ee.FeatureCollection(combined1);
+
+    // Add the stratified random sample points to the map
+    Map.addLayer(rand_st_points_comb, { color: "orange" }, label + " Sample Points");
+
+    // Export the masked NDVI change image
+    Export.image.toDrive({
+      image: ndviChangeMasked.clip(study_area),
+      description: label + "_NDVI_Change",
+      scale: 30,
+      region: study_area,
+      maxPixels: 1e13,
+      folder: "GEE_Exports",
+    });
+
+    // Export the stratified random sample points to Drive
+    Export.table.toDrive({
+      collection: rand_st_points_comb,
+      description: label + "_NDVI_Sample",
+      fileFormat: "CSV",
+      folder: "GEE_Exports",
+    });
+  }
+}

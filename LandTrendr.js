@@ -19,12 +19,6 @@
      (b) Protected forests enrolled in a carbon offset scheme
    in the drylands of East Africa.
 
- Methodology:
-   - Acquire Landsat imagery for multiple study locations.
-   - Use the LandTrendr algorithm to detect and quantify AGB change.
-   - Analyze NDVI and other indices over a ten-year period.
-   - Compare trends between protected areas and those with carbon offset schemes.
-
  Study Areas (from data.js):
    - Chyulu Hills National Park, Kenya
    - Amboseli National Park, Kenya

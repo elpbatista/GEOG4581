@@ -19,12 +19,6 @@
      (b) Protected forests enrolled in a carbon offset scheme
    in the drylands of East Africa.
 
- Methodology:
-   - Acquire Sentinel-1 SAR and Sentinel-2 NDRE1 imagery for six study locations.
-   - Use a random forest classifier to map land cover.
-   - Perform a ten-year change detection to quantify AGB change in each location.
-   - Compare trends between protected areas and those with carbon offset schemes.
-
  Study Areas (from data-Chyulu_Amboseli.js):
    - Chyulu Hills National Park, Kenya
    - Amboseli National Park, Kenya
@@ -268,7 +262,7 @@ function runVersion1(study_area, label, v1_years, start, end) {
   }
 }
 
-// ======================= Version 2: Sentinel-2 & LandTrendr Analysis =======================
+// ======================= Version 2: Sentinel-2 =======================
 function runVersion2(study_area, label, v2_years, start, end) {
   var ndre1 = {};
 
