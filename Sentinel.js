@@ -450,7 +450,7 @@ function runValidation(study_area, label, years, start, end) {
     // Stratified random sample from the masked NDVI change
     var sampleSize = 50; // Adjust sample size as needed
 
-    var sample = ndviChangeMasked.stratifiedSample({
+    var sample = ndviChangeMask.stratifiedSample({
       numPoints: sampleSize,
       classBand: "NDVI_Change",
       region: study_area,
