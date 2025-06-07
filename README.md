@@ -49,10 +49,12 @@ GEOG4581/
 ├── LandTrendrGUI.js                # Interactive GUI for LandTrendr analysis
 ├── Sentinel.js                     # Sentinel-1/2 analysis script
 ├── Sentinel_D6.js                  # Sentinel analysis for Deliverable #6
+├── Validation-Marsabit.js          # Validation for change detection in Marsabit
 ├── data.js                         # Study area definitions (all areas)
 ├── data-Chyulu_Amboseli.js         # Data for Chyulu Hills & Amboseli
 ├── data-Bale_Leroghi_Marsabit.js   # Data for Bale, Leroghi, Marsabit
 ├── data-LowerZambezi_Munyeta.js    # Data for Lower Zambezi & Munyeta
+├── samples-Marsabit.js             # CEO validation points for Marsabit
 ├── (other scripts and modules as needed)
 ```
 
@@ -85,16 +87,32 @@ GEOG4581/
 
 - Analyze Sentinel-1 SAR and Sentinel-2 NDRE1 imagery for the study areas.
 - Apply cloud and cloud-shadow masking to Sentinel-2 imagery.
-- Compare and visualize the following indices:
+- Compute and visualize the following indices:
   - **NDVI** (Normalized Difference Vegetation Index)
   - **NDRE1** (Normalized Difference Red Edge Index 1)
   - **SAR backscatter** (Sentinel-1, e.g., VV, VH polarizations)
-- Perform change detection and visualize results for the study areas.
+- Perform change detection between years for all indices.
+- Classify NDRE1 change into "decrease", "no change", and "increase" categories.
+- Generate stratified random samples for validation.
+- Export classified images and validation samples to Google Drive.
+- Visualize results with map layers, histograms, and legends for each study area.
+- Support unsupervised classification using KMeans clustering (optional).
 - `Sentinel_D6.js` is tailored for Deliverable #6, focusing on Chyulu Hills and Amboseli.
+
+### Validation-Marsabit.js
+
+- Loads CEO validation points for Marsabit National Park.
+- Computes NDRE1 change from Sentinel-2 composites for two years.
+- Classifies NDRE1 change into "decrease", "no change", and "increase" categories using defined thresholds.
+- Samples the classified NDRE1 change image at CEO validation points.
+- Maps reference and predicted classes to numeric codes for confusion matrix calculation.
+- Computes and prints the confusion matrix and accuracy metrics (overall, kappa, producer's, and user's accuracy).
+- Visualizes NDRE1 change, classified map, sample points, and histograms.
 
 ### Data Modules
 
 - Each `data-*.js` file defines a set of study areas as an array of objects with geometry and properties.
+- `samples-Marsabit.js` provides CEO validation points for Marsabit National Park.
 - You can swap the active data module by changing the `require()` path at the top of the analysis scripts.
 
 ---
