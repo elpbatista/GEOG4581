@@ -23,7 +23,15 @@
 print("=== Kuhisi Kwa Mbali ===");
 
 // ---------------------- Load CEO Samples ----------------------
-var ceoSamples = ee.FeatureCollection("users/elpbatista/ceo_samples_Marsabit");
+
+var samples = require("users/elpbatista/GEOG4581:samples-Marsabit.js");
+var samplesMarsabit = samples.samples;
+
+// creat FeatureCollection from samples
+var ceoSamples = ee.FeatureCollection(samplesMarsabit);
+
+// Uncomment the line below to load CEO sample points from an asset
+// var ceoSamples = ee.FeatureCollection("users/elpbatista/ceo_samples_Marsabit");
 // print("CEO Samples:", ceoSamples.limit(5));
 
 // ---------------------- Load Study Areas ----------------------
@@ -43,7 +51,7 @@ var colorBrewer = [
 ];
 
 // ---------------------- Analysis Parameters ----------------------
-var years = [2020, 2024];
+var years = [2019, 2024];
 var start = "04-15";
 var end = "06-15";
 
